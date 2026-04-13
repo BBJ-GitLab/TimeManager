@@ -13,6 +13,10 @@ let userProfile = {
     }
 };
 
+// AI API 配置
+const aiApiKey = 'sk-432d471e52c64d5fb5b4884e27634e5b';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
 // 模块切换
 let activeModule = 'task';
 
@@ -1419,11 +1423,16 @@ async function modifyPlan() {
         return;
     }
 
+
+
     showLoading();
     
     try {
-        // 简化处理：重新生成规划
-        const modifiedPlan = await aiService.generateTimePlan(tasks, userProfile);
+        // 使用真正的AI API处理修改意见
+        const modifiedTasks = await callDeepSeekAPI(tasks, feedback, userProfile);
+        
+        // 使用AI调整后的任务重新生成规划
+        const modifiedPlan = await aiService.generateTimePlan(modifiedTasks, userProfile);
         
         currentPlan = modifiedPlan;
         renderPlan(currentPlan);
@@ -1432,13 +1441,181 @@ async function modifyPlan() {
         if (resultSection) {
             resultSection.scrollIntoView({ behavior: 'smooth' });
         }
-        showNotification('规划已重新生成！', 'success');
+        showNotification('AI已根据您的意见重新生成规划！', 'success');
     } catch (error) {
-        console.error('修改规划失败:', error);
-        showNotification('修改规划失败：' + error.message, 'error');
+        console.error('AI修改规划失败:', error);
+        showNotification('AI修改规划失败：' + error.message, 'error');
     } finally {
         hideLoading();
     }
+}
+
+// 调用DeepSeek API进行智能规划修改
+async function callDeepSeekAPI(tasks, feedback, userProfile) {
+    if (!aiApiKey) {
+        throw new Error('API密钥未设置');
+    }
+    
+    // 构建任务描述
+    const taskDescriptions = tasks.map((task, index) => 
+        `${index + 1}. ${task.title} (${task.duration}分钟, ${task.priority}优先级, ${task.type}类型)`
+    ).join('\n');
+    
+    // 构建用户配置描述
+    const profileDescription = `用户角色：${userProfile.role || '未设置'}, 偏好：${JSON.stringify(userProfile.preferences)}`;
+    
+    // 构建API请求
+    const requestBody = {
+        model: 'deepseek-chat',
+        messages: [
+            {
+                role: 'system',
+                content: `你是一个专业的时间规划助手。请根据用户反馈智能调整任务安排。
+
+任务格式要求：
+- 每个任务必须有title、duration、priority、type字段
+- priority只能是'high'、'medium'、'low'
+- type只能是'flexible'、'fixed'、'interval'
+- 如果是fixed类型，需要包含fixedStartTime和fixedEndTime
+- 如果是interval类型，需要包含intervalStartTime和intervalEndTime
+- duration单位是分钟
+
+请返回JSON格式的任务数组，不要包含其他内容。`
+            },
+            {
+                role: 'user',
+                content: `当前任务列表：
+${taskDescriptions}
+
+用户配置：
+${profileDescription}
+
+用户修改意见：
+${feedback}
+
+请根据以上信息智能调整任务安排，返回修改后的任务数组。`
+            }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+    };
+    
+    console.log('发送AI请求:', requestBody);
+    
+    const response = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiApiKey}`
+        },
+        body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API请求失败: ${response.status} - ${errorData.error?.message || response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('AI响应:', data);
+    
+    // 提取AI返回的内容
+    const aiResponse = data.choices[0].message.content;
+    
+    // 尝试从响应中提取JSON数组
+    const jsonMatch = aiResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (!jsonMatch) {
+        throw new Error('AI返回的格式不正确，无法解析任务数据');
+    }
+    
+    try {
+        const modifiedTasks = JSON.parse(jsonMatch[0]);
+        console.log('解析后的任务:', modifiedTasks);
+        return modifiedTasks;
+    } catch (parseError) {
+        throw new Error('解析AI返回的数据失败: ' + parseError.message);
+    }
+}
+
+// 根据用户反馈智能调整任务（备用方案）
+function adjustTasksBasedOnFeedback(tasks, feedback, userProfile) {
+    const modifiedTasks = JSON.parse(JSON.stringify(tasks)); // 深拷贝任务列表
+    
+    // 分析用户反馈，提取关键信息
+    const feedbackLower = feedback.toLowerCase();
+    
+    // 时间调整逻辑
+    if (feedbackLower.includes('提前') || feedbackLower.includes('早上') || feedbackLower.includes('早晨')) {
+        // 将相关任务调整到早上
+        modifiedTasks.forEach(task => {
+            if (feedbackLower.includes('运动') && task.title.toLowerCase().includes('运动')) {
+                task.priority = 'high';
+            }
+            if (feedbackLower.includes('学习') && task.title.toLowerCase().includes('学习')) {
+                task.priority = 'high';
+            }
+        });
+    }
+    
+    if (feedbackLower.includes('推迟') || feedbackLower.includes('晚上') || feedbackLower.includes('下午')) {
+        // 将相关任务调整到下午或晚上
+        modifiedTasks.forEach(task => {
+            if (feedbackLower.includes('娱乐') && task.title.toLowerCase().includes('娱乐')) {
+                task.priority = 'low';
+            }
+            if (feedbackLower.includes('休息') && task.title.toLowerCase().includes('休息')) {
+                task.priority = 'low';
+            }
+        });
+    }
+    
+    if (feedbackLower.includes('增加') || feedbackLower.includes('更多')) {
+        // 增加相关任务的时长
+        modifiedTasks.forEach(task => {
+            if (feedbackLower.includes('学习') && task.title.toLowerCase().includes('学习')) {
+                task.duration = Math.min(task.duration * 1.5, 180); // 最多增加到180分钟
+            }
+            if (feedbackLower.includes('运动') && task.title.toLowerCase().includes('运动')) {
+                task.duration = Math.min(task.duration * 1.3, 120); // 最多增加到120分钟
+            }
+        });
+    }
+    
+    if (feedbackLower.includes('减少') || feedbackLower.includes('缩短')) {
+        // 减少相关任务的时长
+        modifiedTasks.forEach(task => {
+            if (feedbackLower.includes('娱乐') && task.title.toLowerCase().includes('娱乐')) {
+                task.duration = Math.max(task.duration * 0.7, 15); // 最少保留15分钟
+            }
+            if (feedbackLower.includes('休息') && task.title.toLowerCase().includes('休息')) {
+                task.duration = Math.max(task.duration * 0.8, 5); // 最少保留5分钟
+            }
+        });
+    }
+    
+    // 特定任务类型调整
+    if (feedbackLower.includes('固定时间')) {
+        modifiedTasks.forEach(task => {
+            if (task.type === 'flexible') {
+                task.type = 'fixed';
+                task.fixedStartTime = '09:00';
+                task.fixedEndTime = '10:00';
+            }
+        });
+    }
+    
+    if (feedbackLower.includes('灵活安排')) {
+        modifiedTasks.forEach(task => {
+            if (task.type === 'fixed') {
+                task.type = 'flexible';
+                delete task.fixedStartTime;
+                delete task.fixedEndTime;
+            }
+        });
+    }
+    
+    console.log('根据反馈调整后的任务:', modifiedTasks);
+    return modifiedTasks;
 }
 
 // 保存开始设置
@@ -1780,9 +1957,15 @@ function initStartupAnimation() {
     }
 }
 
-// 页面加载完成后初始化
-window.onload = function() {
+// 使用DOMContentLoaded事件确保DOM元素加载后立即执行启动动画
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStartupAnimation);
+} else {
     initStartupAnimation();
+}
+
+// 页面加载完成后初始化其他功能
+window.onload = function() {
     // 初始化其他功能，但不立即执行initUserProfile
     initElements();
     bindEvents();
