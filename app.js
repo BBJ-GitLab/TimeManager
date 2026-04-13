@@ -1950,9 +1950,8 @@ function initStartupAnimation() {
             
             // 动画结束后完全隐藏
             setTimeout(() => {
-                startupAnimation.style.display = 'none';
-                startupAnimation.style.zIndex = '-1'; // 设置为负值，确保不阻挡任何元素
-                startupAnimation.style.pointerEvents = 'auto'; // 恢复事件
+                // 完全移除启动动画，确保不阻挡任何元素
+                startupAnimation.remove(); // 直接从DOM中移除
                 
                 // 初始化用户配置，显示登录弹窗
                 initUserProfile();
