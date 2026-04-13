@@ -14,9 +14,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 99999;
     animation: startupFadeIn 0.5s ease-out;
-    pointer-events: none;
 }
 
 .animation-content {
@@ -752,7 +751,7 @@ h1, h2, h3, h4, h5, h6, p, span, button, input, textarea, select, label {
     margin-left: 5px;
 }
 
-.btn-change-role, .btn-logout, .btn-help {
+.btn-change-role, .btn-logout, .btn-help, .btn-api-key {
     background: rgba(102, 126, 234, 0.1);
     border: 2px solid rgba(102, 126, 234, 0.3);
     color: var(--text-primary);
@@ -766,7 +765,7 @@ h1, h2, h3, h4, h5, h6, p, span, button, input, textarea, select, label {
     font-weight: 500;
 }
 
-.btn-change-role:hover, .btn-logout:hover, .btn-help:hover {
+.btn-change-role:hover, .btn-logout:hover, .btn-help:hover, .btn-api-key:hover {
     background: rgba(102, 126, 234, 0.2);
     border-color: var(--watercolor-blue);
     transform: translateY(-2px);
@@ -1957,4 +1956,69 @@ h1, h2, h3, h4, h5, h6, p, span, button, input, textarea, select, label {
 .btn-change-role:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* AI修改规划功能样式 */
+.feedback-section {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,246,243,0.95) 100%);
+    border-radius: var(--border-radius);
+    box-shadow: 
+        var(--shadow-soft),
+        inset 0 0 30px rgba(102, 126, 234, 0.03);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.feedback-input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 25px;
+    font-size: 16px;
+    font-family: inherit;
+    background: rgba(255,255,255,0.8);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 15px;
+}
+
+.feedback-input:focus {
+    outline: none;
+    border-color: var(--watercolor-blue);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+}
+
+.feedback-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+#modifyPlanBtn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    background: linear-gradient(135deg, var(--watercolor-purple) 0%, var(--watercolor-pink) 100%);
+    color: var(--text-primary);
+    border: 2px solid rgba(118, 75, 162, 0.3);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#modifyPlanBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.3);
+    border-color: var(--watercolor-purple);
+}
+
+#modifyPlanBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
