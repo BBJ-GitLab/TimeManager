@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>时间规划器 - 做时间的主人</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
     <!-- 启动动画 -->
@@ -18,6 +18,17 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        // 立即显示启动动画，确保它在所有元素之前显示
+        (function() {
+            const startupAnimation = document.getElementById('startupAnimation');
+            if (startupAnimation) {
+                startupAnimation.style.display = 'flex';
+                startupAnimation.style.zIndex = '99999';
+            }
+        })();
+    </script>
 
     <div class="container">
        <!--注：本程序没有任何AI功能，完全基于用户输入和程序生成-->
@@ -497,6 +508,6 @@
 
     </div>
 
-    <script src="app.js?v=11"></script>
+    <script src="js/app.js?v=11"></script>
 </body>
 </html>
