@@ -1957,10 +1957,24 @@ function initStartupAnimation() {
     }
 }
 
-// 使用DOMContentLoaded事件确保DOM元素加载后立即执行启动动画
+// 立即执行启动动画初始化，确保它在页面加载的最早阶段显示
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initStartupAnimation);
+    document.addEventListener('DOMContentLoaded', function() {
+        // 确保启动动画显示在所有元素之前
+        const startupAnimation = document.getElementById('startupAnimation');
+        if (startupAnimation) {
+            startupAnimation.style.display = 'flex';
+            startupAnimation.style.zIndex = '99999';
+        }
+        initStartupAnimation();
+    });
 } else {
+    // 如果文档已经加载完成，立即显示启动动画
+    const startupAnimation = document.getElementById('startupAnimation');
+    if (startupAnimation) {
+        startupAnimation.style.display = 'flex';
+        startupAnimation.style.zIndex = '99999';
+    }
     initStartupAnimation();
 }
 
