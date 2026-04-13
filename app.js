@@ -1957,24 +1957,11 @@ function initStartupAnimation() {
     }
 }
 
-// 立即执行启动动画初始化，确保它在页面加载的最早阶段显示
+// 启动动画已经在HTML中通过内联脚本立即显示
+// 这里只需要初始化动画逻辑
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        // 确保启动动画显示在所有元素之前
-        const startupAnimation = document.getElementById('startupAnimation');
-        if (startupAnimation) {
-            startupAnimation.style.display = 'flex';
-            startupAnimation.style.zIndex = '99999';
-        }
-        initStartupAnimation();
-    });
+    document.addEventListener('DOMContentLoaded', initStartupAnimation);
 } else {
-    // 如果文档已经加载完成，立即显示启动动画
-    const startupAnimation = document.getElementById('startupAnimation');
-    if (startupAnimation) {
-        startupAnimation.style.display = 'flex';
-        startupAnimation.style.zIndex = '99999';
-    }
     initStartupAnimation();
 }
 
